@@ -13,6 +13,7 @@
                 isDragging = true;
                 startY = e.type.includes('mouse') ? e.clientY : e.touches[0].clientY;
                 trigger.classList.add('cutting');
+                document.body.style.overflow = 'hidden'; // Lock scroll
                 if (e.type === 'mousedown') e.preventDefault();
             };
 
@@ -45,6 +46,8 @@
                         cutLevels[2] = true;
                         setTimeout(() => {
                             loader.classList.add('loader-fade');
+                            window.scrollTo(0, 0); // Force top
+                            document.body.style.overflow = 'auto'; // Unlock scroll
                             setTimeout(() => loader.remove(), 800);
                         }, 500);
                     }
@@ -108,6 +111,84 @@
 
         document.addEventListener('mousemove', e => { mx = e.clientX; my = e.clientY; });
         document.addEventListener('mouseleave', () => { mx = -9999; my = -9999; });
+
+        // ─── MAGNETIC VOID PARTICLES ──────────────────────
+        class MagneticParticles {
+            constructor() {
+                this.canvas = document.getElementById('canvas');
+                this.ctx = this.canvas.getContext('2d');
+                this.particles = [];
+                // REDUCED DENSITY (Responsive)
+                const isMobile = window.innerWidth < 768;
+                this.count = isMobile ? 60 : 180; 
+                this.mouse = { x: -1000, y: -1000 };
+                this.init();
+            }
+
+            init() {
+                this.resize();
+                window.addEventListener('resize', () => this.resize());
+                window.addEventListener('mousemove', e => {
+                    this.mouse.x = e.clientX;
+                    this.mouse.y = e.clientY;
+                });
+
+                for (let i = 0; i < this.count; i++) {
+                    // Mobile particles are slower and smaller
+                    const isMobile = window.innerWidth < 768;
+                    this.particles.push({
+                        x: Math.random() * this.canvas.width,
+                        y: Math.random() * this.canvas.height,
+                        baseX: 0,
+                        baseY: 0,
+                        size: Math.random() * (isMobile ? 1.5 : 2.5) + 0.5,
+                        speed: Math.random() * 0.5 + 0.2,
+                        angle: Math.random() * Math.PI * 2,
+                        color: `rgba(180, 150, 120, ${Math.random() * 0.3})`
+                    });
+                }
+                this.animate();
+            }
+
+            resize() {
+                this.canvas.width = window.innerWidth;
+                this.canvas.height = window.innerHeight;
+            }
+
+            animate() {
+                this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+                const isMobile = window.innerWidth < 768;
+
+                this.particles.forEach(p => {
+                    p.angle += 0.005;
+                    p.x += Math.cos(p.angle) * p.speed;
+                    p.y += Math.sin(p.angle) * p.speed;
+
+                    // Magnetic pull (Weaker on mobile)
+                    const dx = this.mouse.x - p.x;
+                    const dy = this.mouse.y - p.y;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+                    const force = (isMobile ? 150 : 300) - dist;
+
+                    if (force > 0) {
+                        const angle = Math.atan2(dy, dx);
+                        p.x -= Math.cos(angle) * (force * 0.02);
+                        p.y -= Math.sin(angle) * (force * 0.02);
+                    }
+
+                    // Reset if out of bounds
+                    if (p.x < 0 || p.x > this.canvas.width) p.x = Math.random() * this.canvas.width;
+                    if (p.y < 0 || p.y > this.canvas.height) p.y = Math.random() * this.canvas.height;
+
+                    this.ctx.fillStyle = p.color;
+                    this.ctx.beginPath();
+                    this.ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                    this.ctx.fill();
+                });
+                requestAnimationFrame(() => this.animate());
+            }
+        }
+        new MagneticParticles();
 
         const RADIUS = 140;
         const STRENGTH = 22;
