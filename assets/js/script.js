@@ -144,14 +144,12 @@
                     if(!this.canvas) return;
                     this.ctx = this.canvas.getContext('2d');
                     this.particles = [];
-                    const isMobile = window.innerWidth < 768;
-                    this.count = isMobile ? 60 : 180; 
+                    this.count = 200; 
                     this.mouse = { x: -1000, y: -1000 };
                     this.init();
                 }
 
                 init() {
-                    if(!this.canvas) return;
                     this.resize();
                     window.addEventListener('resize', () => this.resize());
                     window.addEventListener('mousemove', e => {
@@ -160,13 +158,10 @@
                     });
 
                     for (let i = 0; i < this.count; i++) {
-                        const isMobile = window.innerWidth < 768;
                         this.particles.push({
                             x: Math.random() * this.canvas.width,
                             y: Math.random() * this.canvas.height,
-                            baseX: 0,
-                            baseY: 0,
-                            size: Math.random() * (isMobile ? 1.5 : 2.5) + 0.5,
+                            size: Math.random() * 2.5 + 0.5,
                             speed: Math.random() * 0.5 + 0.2,
                             angle: Math.random() * Math.PI * 2,
                             color: `rgba(180, 150, 120, ${Math.random() * 0.3})`
@@ -182,8 +177,6 @@
 
                 animate() {
                     this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-                    const isMobile = window.innerWidth < 768;
-
                     this.particles.forEach(p => {
                         p.angle += 0.005;
                         p.x += Math.cos(p.angle) * p.speed;
@@ -192,7 +185,7 @@
                         const dx = this.mouse.x - p.x;
                         const dy = this.mouse.y - p.y;
                         const dist = Math.sqrt(dx * dx + dy * dy);
-                        const force = (isMobile ? 150 : 300) - dist;
+                        const force = 300 - dist;
 
                         if (force > 0) {
                             const angle = Math.atan2(dy, dx);
@@ -211,7 +204,11 @@
                     requestAnimationFrame(() => this.animate());
                 }
             }
-            new MagneticParticles();
+            
+            // Only start particles & animations on Desktop
+            if (window.innerWidth >= 768) {
+                new MagneticParticles();
+            }
 
             const RADIUS = 140;
             const STRENGTH = 22;
@@ -256,7 +253,11 @@
                 });
                 requestAnimationFrame(frame);
             }
-            frame();
+            
+            // Only start Ink Displacement on Desktop
+            if (window.innerWidth >= 768) {
+                frame();
+            }
 
             // ─── REVEAL ───────────────────────────────────────
             const obs = new IntersectionObserver(entries => {
